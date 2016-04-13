@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal" >
+
+    <ImageView
+        android:id="@+id/news_item_image"
+        android:layout_width="@dimen/news_image_icon_width"
+        android:layout_height="@dimen/news_image_icon_height"
+        android:scaleType="fitXY" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" 
+        android:padding="@dimen/news_content_padding"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/news_item_title"
+                android:paddingEnd="@dimen/news_content_padding"
+                android:layout_width="0dp"
+                android:textStyle="bold"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/news_item_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/news_item_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end" 
+            android:maxLines="3"/>
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="@dimen/news_arrow_icon_width"
+        android:layout_height="@dimen/news_arrow_icon_height"
+        android:layout_marginBottom="@dimen/news_arrow_icon_margin_top"
+        android:layout_marginEnd="@dimen/news_arrow_icon_margin_end"
+        android:layout_marginStart="@dimen/news_arrow_icon_margin_end"
+        android:layout_marginTop="@dimen/news_arrow_icon_margin_top"
+        android:scaleType="fitXY"
+        android:src="@drawable/arrow_right"
+        android:alpha="0.5" />
+
+</LinearLayout>

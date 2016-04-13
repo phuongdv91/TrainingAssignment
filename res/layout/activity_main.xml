@@ -1,0 +1,59 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/application_background"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.assignment.LoginActivity" >
+
+    <RelativeLayout
+        android:id="@+id/layout_login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" >
+
+        <EditText
+            android:id="@+id/login_txt_username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/login_txt_username_margin_top"
+            android:background="@android:color/white"
+            android:hint="@string/login_txt_username_hint"
+            android:padding="10dp"
+            android:singleLine="true" />
+
+        <EditText
+            android:id="@+id/login_txt_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/login_txt_username"
+            android:layout_marginTop="@dimen/login_txt_password_margin_top"
+            android:background="@android:color/white"
+            android:hint="@string/login_txt_password_hint"
+            android:inputType="textPassword"
+            android:padding="10dp"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/login_btn_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/login_txt_password"
+            android:layout_marginTop="@dimen/login_btn_login_margin_top"
+            android:text="@string/login_btn_login"
+            android:textAllCaps="false" />
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="@dimen/login_img_icon_width"
+        android:layout_height="@dimen/login_img_icon_height"
+        android:layout_above="@id/layout_login"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/login_img_icon_margin_bottom"
+        android:scaleType="fitXY"
+        android:src="@drawable/dantri_icon" />
+
+</RelativeLayout>
