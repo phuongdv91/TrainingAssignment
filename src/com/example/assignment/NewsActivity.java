@@ -1,12 +1,12 @@
 package com.example.assignment;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.example.assignment.RssDataController.IF_TaskListener;
 import com.example.assignment.ImageLoader.ImageLoader;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,8 +15,9 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.State;
-import android.os.AsyncTask.Status;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,17 +31,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class NewsActivity extends Activity implements IF_TaskListener {
+public class NewsActivity extends Activity {
 
-	private static final String URL = "http://vietnamnet.vn/rss/home.rss";
+	private static final int sScheduleRequestCode = 1;
+	private static final int sIntervalTime = 10000;
+	private AlarmManager mAlarmManager;
+	private PendingIntent mSchedulePendingIntent;
+	private ResponseReceiver mResponseReceiver = new ResponseReceiver();
 	private boolean mIsLoaded = false;
 
-	private IntentFilter mFilter = new IntentFilter(
-			ConnectivityManager.CONNECTIVITY_ACTION);
 	private ListView mListViewNews;
 	private NewsAdapter mNewsAdapter;
 	private ProgressDialog mProgressDialog;
-	private RssDataController mTask;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +50,19 @@ public class NewsActivity extends Activity implements IF_TaskListener {
 		setContentView(R.layout.activity_news);
 		mListViewNews = (ListView) findViewById(R.id.listviewNews);
 		mListViewNews.setOnItemClickListener(mOnItemClickListener);
-		mTask = new RssDataController();
-		mTask.setListenter(this);
-		processNetWorkState();
+		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		Intent intent = new Intent(NewsActivity.this, RssDataService.class);
+		mSchedulePendingIntent = PendingIntent.getService(
+				NewsActivity.this, sScheduleRequestCode, intent,
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		registerReceiver(mResponseReceiver, new IntentFilter(
+				ResponseReceiver.ACTION_RESP));
+	}
+
+	@Override
+	protected void onDestroy() {
+		unregisterReceiver(mResponseReceiver);
+		super.onDestroy();
 	}
 
 	private void showLoadingDialog() {
@@ -65,11 +77,15 @@ public class NewsActivity extends Activity implements IF_TaskListener {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		registerReceiver(mNetworkChangeReceiver, mFilter);
+		registerReceiver(mNetworkChangeReceiver, new IntentFilter(
+				ConnectivityManager.CONNECTIVITY_ACTION));
+		processNetWorkState();
 	};
 	
 	@Override
 	protected void onPause() {
+		mAlarmManager.cancel(mSchedulePendingIntent);
+		mNetWorkState = null;
 		unregisterReceiver(mNetworkChangeReceiver);
 		super.onPause();
 	}
@@ -92,16 +108,15 @@ public class NewsActivity extends Activity implements IF_TaskListener {
 				getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo netInfo = conMan.getActiveNetworkInfo();
 		if (netInfo != null) {
-			Log.d(NewsActivity.class.getSimpleName(), netInfo.isConnected() + " " + netInfo.getState());
+			Log.d(NewsActivity.class.getSimpleName(), netInfo.isConnected()
+					+ " " + netInfo.getState());
 			if (netInfo.isConnected()) {
-				Log.d(NewsActivity.class.getSimpleName(), mTask.getStatus() + " ");
-				if (mTask.getStatus() != Status.RUNNING) {
+				if (mNetWorkState != netInfo.getState()) {
 					if (mIsLoaded == false) {
 						showLoadingDialog();
 					}
-					mTask = new RssDataController();
-					mTask.setListenter(this);
-					mTask.execute(URL);
+					Intent intent = new Intent(NewsActivity.this, RssDataService.class);
+					startService(intent);
 				}
 			} else {
 				if (mProgressDialog != null
@@ -113,6 +128,7 @@ public class NewsActivity extends Activity implements IF_TaskListener {
 						&& mNetWorkState != State.DISCONNECTED) {
 					showToast(R.string.news_network_disconnected);
 				}
+				mAlarmManager.cancel(mSchedulePendingIntent);
 			}
 			mNetWorkState = netInfo.getState();
 		} else {
@@ -124,21 +140,44 @@ public class NewsActivity extends Activity implements IF_TaskListener {
 			if (mNetWorkState != State.DISCONNECTED) {
 				showToast(R.string.news_network_disconnected);
 			}
+			mAlarmManager.cancel(mSchedulePendingIntent);
 		}
 	}
-	
-	@Override
-	public void onLoadRssComplete(ArrayList<NewsItem> result) {
-		if (mProgressDialog != null) {
-			mProgressDialog.dismiss();
-			mProgressDialog = null;
-		}
-		if (result != null && result.size() > 0) {
-			mIsLoaded = true;
-			mNewsAdapter = new NewsAdapter(this, result);
-			mListViewNews.setAdapter(mNewsAdapter);
-		} else {
-			showToast(R.string.news_load_fail);
+
+	public class ResponseReceiver extends BroadcastReceiver {
+		public static final String ACTION_RESP = "com.example.assignment.intent.action.MESSAGE_PROCESSED";
+		public static final String RESULT_LIST = "rss_data_result";
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent == null
+					|| ACTION_RESP.equals(intent.getAction()) == false) {
+				return;
+			}
+			List<NewsItem> result = intent.getParcelableArrayListExtra(RESULT_LIST);
+			if (mProgressDialog != null) {
+				mProgressDialog.dismiss();
+				mProgressDialog = null;
+			}
+			if (result != null && result.size() > 0) {
+				mIsLoaded = true;
+				mAlarmManager.cancel(mSchedulePendingIntent);
+		        final int SDK_INT = Build.VERSION.SDK_INT;
+				if (SDK_INT < Build.VERSION_CODES.KITKAT) {
+					mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+							SystemClock.elapsedRealtime() + sIntervalTime,
+							mSchedulePendingIntent);
+				} else if (Build.VERSION_CODES.KITKAT <= SDK_INT) {
+					mAlarmManager.setExact(
+							AlarmManager.ELAPSED_REALTIME_WAKEUP,
+							SystemClock.elapsedRealtime() + sIntervalTime,
+							mSchedulePendingIntent);
+				}
+				mNewsAdapter = new NewsAdapter(NewsActivity.this, result);
+				mListViewNews.setAdapter(mNewsAdapter);
+			} else {
+				showToast(R.string.news_load_fail);
+			}
 		}
 	}
 

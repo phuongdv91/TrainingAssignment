@@ -1,6 +1,9 @@
 package com.example.assignment;
 
-public class NewsItem {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class NewsItem implements Parcelable{
 	private String mImage;
 	private String mTitle;
 	private String mDateTime;
@@ -15,6 +18,13 @@ public class NewsItem {
 		setTitle(title);
 		setDateTime(dateTime);
 		setDescription(description);
+	}
+
+	public NewsItem(Parcel in) {
+		mTitle = in.readString();
+		mDateTime = in.readString();
+		mDescription = in.readString();
+		mImage = in.readString();
 	}
 
 	public String getImage() {
@@ -47,5 +57,28 @@ public class NewsItem {
 
 	public void setDescription(String mDescription) {
 		this.mDescription = mDescription;
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	public static final Parcelable.Creator<NewsItem> CREATOR = new Parcelable.Creator<NewsItem>() {
+        public NewsItem createFromParcel(Parcel in) {
+            return new NewsItem(in);
+        }
+
+        public NewsItem[] newArray(int size) {
+            return new NewsItem[size];
+        }
+    };
+    
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeString(mTitle);
+		dest.writeString(mDateTime);
+		dest.writeString(mDescription);
+		dest.writeString(mImage);
 	}
 }

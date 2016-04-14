@@ -30,6 +30,8 @@
             android:name=".NewsActivity"
             android:label="@string/app_name" >
         </activity>
+        
+        <service android:name=".RssDataService"/>
     </application>
 
 </manifest>
