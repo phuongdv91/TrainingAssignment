@@ -12,7 +12,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import com.example.assignment.NewsActivity.ResponseReceiver;
+import com.example.assignment.MainService.ResponseReceiver;
 
 import android.app.IntentService;
 import android.content.Intent;

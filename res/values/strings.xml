@@ -14,5 +14,5 @@
     <string name="news_header">Dantri</string>
     <string name="news_loading_message">Page is loading, please wait...</string>
 	<string name="news_network_disconnected">Network disconnected</string>
-	<string name="news_load_fail">Page load is failed.</string>
+	<string name="news_load_failed">Page load is failed. Retrying...</string>
 </resources>
