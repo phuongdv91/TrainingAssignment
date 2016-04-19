@@ -1,5 +1,6 @@
 package com.example.assignment;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.example.assignment.MainService.IF_DataListener;
@@ -12,10 +13,15 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Vibrator;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
@@ -28,16 +34,40 @@ public class NewsActivity extends Activity implements IF_DataListener{
 
 	private boolean mIsLoaded = false;
 
+	private TextView mTxtNewStories;
 	private ListView mListViewNews;
 	private NewsAdapter mNewsAdapter;
 	private ProgressDialog mProgressDialog;
+	private List<NewsItem> mNewsList = new ArrayList<NewsItem>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_news);
 		mListViewNews = (ListView) findViewById(R.id.listviewNews);
+		mTxtNewStories = (TextView) findViewById(R.id.news_txt_newStories);
+		mTxtNewStories.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mMainService.onNotified();
+				mListViewNews.smoothScrollToPosition(0);
+				mTxtNewStories.setVisibility(View.GONE);
+			}
+		});
+		mNewsAdapter = new NewsAdapter(NewsActivity.this, mNewsList);
+		mListViewNews.setAdapter(mNewsAdapter);
 		mListViewNews.setOnItemClickListener(mOnItemClickListener);
+		mListViewNews.setOnScrollListener(new OnScrollListener() {
+			
+			@Override
+			public void onScrollStateChanged(AbsListView view, int scrollState) {}
+			
+			@Override
+			public void onScroll(AbsListView view, int firstVisibleItem,
+					int visibleItemCount, int totalItemCount) {
+				checkListAtTop();
+			}
+		});
 	}
 
 	private void showLoadingDialog() {
@@ -89,14 +119,12 @@ public class NewsActivity extends Activity implements IF_DataListener{
 		}
 	};
 
-	private List<NewsItem> mNews;
 	public class NewsAdapter extends BaseAdapter {
 		private LayoutInflater mInflator;
 		private ImageLoader mImageLoader;
 
 		public NewsAdapter(Activity activity, List<NewsItem> news) {
 			super();
-			mNews = news;
 			mInflator = activity.getLayoutInflater();
 			mImageLoader = new ImageLoader(activity.getApplicationContext());
 		}
@@ -119,7 +147,7 @@ public class NewsActivity extends Activity implements IF_DataListener{
 			} else {
 				viewHolder = (ViewHolder) view.getTag();
 			}
-			NewsItem item = mNews.get(position);
+			NewsItem item = mNewsList.get(position);
 			viewHolder.title.setText(item.getTitle());
 			viewHolder.dateTime.setText(item.getDateTime());
 			viewHolder.description.setText(Html.fromHtml(item.getDescription()));
@@ -136,12 +164,12 @@ public class NewsActivity extends Activity implements IF_DataListener{
 
 		@Override
 		public int getCount() {
-			return mNews.size();
+			return mNewsList.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return mNews.get(position);
+			return mNewsList.get(position);
 		}
 
 		@Override
@@ -188,17 +216,42 @@ public class NewsActivity extends Activity implements IF_DataListener{
 	}
 
 	@Override
-	public void onLoadDataCompleted(List<NewsItem> result) {
+	public void onLoadDataCompleted(List<NewsItem> result, boolean hasNewPost) {
 		if (result != null && result.size() > 0) {
 			mIsLoaded = true;
 			if (mProgressDialog != null) {
 				mProgressDialog.dismiss();
 				mProgressDialog = null;
 			}
-			mNewsAdapter = new NewsAdapter(NewsActivity.this, result);
-			mListViewNews.setAdapter(mNewsAdapter);
+			mNewsList = result;
+			Log.d("TEST", "hasNewPost: " + hasNewPost);
+			if (hasNewPost) {
+				Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+				vibrator.vibrate(500);
+			}
+			mNewsAdapter.notifyDataSetChanged();
+			checkListAtTop();
 		} else {
 			showToast(R.string.news_load_failed);
+		}
+	}
+	
+	private void checkListAtTop() {
+		boolean listIsAtTop = false;
+		if (mListViewNews.getChildCount() == 0) {
+			listIsAtTop = true;
+		} else {
+			listIsAtTop = mListViewNews.getChildAt(0).getTop() == 0;
+		}
+		if (listIsAtTop) {
+			if (mMainService != null) {
+				mMainService.onNotified();
+			}
+			mTxtNewStories.setVisibility(View.GONE);
+		} else {
+			if (mMainService != null && mMainService.hasNewPost()) {
+				mTxtNewStories.setVisibility(View.VISIBLE);
+			}
 		}
 	}
 }

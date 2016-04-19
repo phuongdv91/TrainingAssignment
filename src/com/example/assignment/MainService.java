@@ -1,8 +1,14 @@
 package com.example.assignment;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.Notification.Builder;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -24,12 +30,15 @@ public class MainService extends Service{
 	private final IBinder mBinder = new ServiceBinder();
 	
 	private static final int sScheduleRequestCode = 1;
-	private static final int sIntervalTime = 10000;
+	private static final int sIntervalTime = 30000;
 	private AlarmManager mAlarmManager;
 	private PendingIntent mSchedulePendingIntent;
 	private ResponseReceiver mResponseReceiver = new ResponseReceiver();
 	
-	List<NewsItem> mNewsList;
+	private static final int sNotificationId = 123;
+	private List<NewsItem> mNewsList;
+	private Map<String, Integer> mNewsMap = new HashMap<String, Integer>();
+	private boolean mHasNewPost = false;
 	private IF_DataListener mDataListener;
 	
 	@Override
@@ -47,9 +56,19 @@ public class MainService extends Service{
 	public void setDataListener(IF_DataListener listener) {
 		mDataListener = listener;
 		if (mDataListener != null && mNewsList != null && mNewsList.size() > 0) {
-			mDataListener.onLoadDataCompleted(mNewsList);
+			mDataListener.onLoadDataCompleted(mNewsList, false);
 		}
+		NotificationManager notificationMng = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationMng.cancel(sNotificationId);
 		processNetWorkState();
+	}
+
+	public void onNotified() {
+		mHasNewPost = false;
+	}
+
+	public boolean hasNewPost() {
+		return mHasNewPost;
 	}
 
 	@Override
@@ -91,6 +110,9 @@ public class MainService extends Service{
 			}
 			List<NewsItem> result = intent.getParcelableArrayListExtra(RESULT_LIST);
 			if (result != null && result.size() > 0) {
+				List<NewsItem> newPost = checkNewPost(result);
+				boolean hasNewPost = (mNewsList != null && mNewsList.size() > 0
+						&& newPost != null && newPost.size() > 0);
 				mNewsList = result;
 				mAlarmManager.cancel(mSchedulePendingIntent);
 		        final int SDK_INT = Build.VERSION.SDK_INT;
@@ -105,15 +127,31 @@ public class MainService extends Service{
 							mSchedulePendingIntent);
 				}
 				if (mDataListener != null) {
-					mDataListener.onLoadDataCompleted(mNewsList);
+					mDataListener.onLoadDataCompleted(mNewsList, hasNewPost);
+				} else {
+					createNotification(newPost);
+				}
+				mHasNewPost = mHasNewPost || hasNewPost;
+				mNewsMap.clear();
+				for (int i = 0; i < result.size(); i++) {
+					mNewsMap.put(result.get(i).getLink(), i);
 				}
 			} else {
 				if (mDataListener != null) {
 					mDataListener.onLoadFailed();
 				}
-				Intent i = new Intent(MainService.this, RssDataService.class);
-				startService(i);
+				processNetWorkState();
 			}
+		}
+
+		private List<NewsItem> checkNewPost(List<NewsItem> result) {
+			List<NewsItem> ret = new ArrayList<NewsItem>();
+			for (int i = 0; i < result.size(); i++) {
+				if (mNewsMap.containsKey(result.get(i).getLink()) == false) {
+					ret.add(result.get(i));
+				}
+			}
+			return ret;
 		}
 	}
 	
@@ -164,10 +202,50 @@ public class MainService extends Service{
 		}
 	}
 	
+	public void createNotification(List<NewsItem> newPost) {
+		if (newPost == null || newPost.size() == 0) {
+			return;
+		}
+		Intent intent = new Intent(MainService.this, NewsActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+		NotificationManager notificationMng = 
+				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationMng.cancel(sNotificationId);
+		Builder builder = new Notification.Builder(MainService.this)
+				.setSmallIcon(R.drawable.dantri_icon)
+				.setDefaults(Notification.DEFAULT_ALL)
+				.setOnlyAlertOnce(true)
+				.setAutoCancel(true)
+				.setWhen(System.currentTimeMillis());
+		if (newPost.size() > 1) {
+			builder.setContentTitle(getString(R.string.notification_title_multi))
+					.setContentText(getString(R.string.notification_content_multi))
+					.setTicker(getString(R.string.notification_sticker_multi));
+			Notification.InboxStyle inboxStyle = new Notification.InboxStyle();
+			inboxStyle.setBigContentTitle(getString(R.string.notification_title_multi));
+			for (int i = 0; i < newPost.size(); i++) {
+				inboxStyle.addLine(newPost.get(i).getTitle());
+			}
+			builder.setStyle(inboxStyle);
+		} else {
+			builder.setContentTitle(newPost.get(0).getTitle())
+					.setContentText(newPost.get(0).getDescription())
+					.setTicker(newPost.get(0).getTitle());
+		}
+
+        PendingIntent pendingNotificationIntent = PendingIntent.getActivity(
+                MainService.this, sNotificationId, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(pendingNotificationIntent);
+        notificationMng.notify(sNotificationId, builder.build());
+	}
+
 	public interface IF_DataListener {
 		public void onLoading();
 		public void onLoadFailed();
 		public void onNetWorkDisconnected(boolean isNeedShowToast);
-		public void onLoadDataCompleted(List<NewsItem> result);
+		public void onLoadDataCompleted(List<NewsItem> result, boolean hasNewPost);
 	}
 }

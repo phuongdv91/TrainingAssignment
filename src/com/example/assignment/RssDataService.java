@@ -132,6 +132,15 @@ public class RssDataService extends IntentService{
 								}
 							}
 							break;
+						case LINK:
+							if (content.length() != 0) {
+								if (pdData.getLink() != null) {
+									pdData.setLink(pdData.getLink() + content);
+								} else {
+									pdData.setLink(content);
+								}
+							}
+							break;
 						default:
 							break;
 						}

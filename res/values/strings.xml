@@ -12,7 +12,12 @@
     
     <string name="news_page_url">"http://vietnamnet.vn/rss/home.rss"</string>
     <string name="news_header">Dantri</string>
+    <string name="news_new_stories">New stories</string>
     <string name="news_loading_message">Page is loading, please wait...</string>
 	<string name="news_network_disconnected">Network disconnected</string>
 	<string name="news_load_failed">Page load is failed. Retrying...</string>
+	
+	<string name="notification_title_multi">Dantri</string>
+	<string name="notification_sticker_multi">Breaking news</string>
+	<string name="notification_content_multi">Some new stories...</string>
 </resources>

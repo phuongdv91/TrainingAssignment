@@ -8,16 +8,18 @@ public class NewsItem implements Parcelable{
 	private String mTitle;
 	private String mDateTime;
 	private String mDescription;
+	private String mLink;
 
 	public NewsItem() {
 	}
 
 	public NewsItem(String image, String title, String dateTime,
-			String description) {
+			String description, String link) {
 		setImage(image);
 		setTitle(title);
 		setDateTime(dateTime);
 		setDescription(description);
+		setLink(link);
 	}
 
 	public NewsItem(Parcel in) {
@@ -25,38 +27,47 @@ public class NewsItem implements Parcelable{
 		mDateTime = in.readString();
 		mDescription = in.readString();
 		mImage = in.readString();
+		mLink = in.readString();
 	}
 
 	public String getImage() {
 		return mImage;
 	}
 
-	public void setImage(String mImage) {
-		this.mImage = mImage;
+	public void setImage(String image) {
+		mImage = image;
 	}
 
 	public String getTitle() {
 		return mTitle;
 	}
 
-	public void setTitle(String mTitle) {
-		this.mTitle = mTitle;
+	public void setTitle(String title) {
+		mTitle = title;
 	}
 
 	public String getDateTime() {
 		return mDateTime;
 	}
 
-	public void setDateTime(String mDateTime) {
-		this.mDateTime = mDateTime;
+	public void setDateTime(String dateTime) {
+		mDateTime = dateTime;
 	}
 
 	public String getDescription() {
 		return mDescription;
 	}
 
-	public void setDescription(String mDescription) {
-		this.mDescription = mDescription;
+	public void setDescription(String description) {
+		mDescription = description;
+	}
+
+	public String getLink() {
+		return mLink;
+	}
+
+	public void setLink(String link) {
+		mLink = link;
 	}
 
 	@Override
@@ -80,5 +91,6 @@ public class NewsItem implements Parcelable{
 		dest.writeString(mDateTime);
 		dest.writeString(mDescription);
 		dest.writeString(mImage);
+		dest.writeString(mLink);
 	}
 }

@@ -5,23 +5,34 @@
     android:background="@color/application_background"
     tools:context="com.example.assignment.NewsActivity" >
 
-<TextView 
-    android:id="@+id/news_txt_header"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerHorizontal="true"
-    android:textColor="@android:color/white"
-    android:text="@string/news_header"
-    android:textSize="@dimen/news_header_text_size"
-    android:layout_marginTop="@dimen/news_header_margin_top"
-    android:layout_marginBottom="@dimen/news_header_margin_top"/>
+    <TextView
+        android:id="@+id/news_txt_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/news_header_margin_top"
+        android:layout_marginTop="@dimen/news_header_margin_top"
+        android:text="@string/news_header"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/news_header_text_size" />
 
-<ListView 
-    android:layout_below="@id/news_txt_header"
-    android:background="@android:color/white"
-    android:id="@+id/listviewNews"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content" 
-    android:dividerHeight="1dp"/> 
-
+    <ListView
+        android:id="@+id/listviewNews"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/news_txt_header"
+        android:background="@android:color/white"
+        android:dividerHeight="1dp" />
+    
+    <TextView
+        android:id="@+id/news_txt_newStories"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/news_txt_header"
+        android:layout_centerHorizontal="true"
+        android:padding="@dimen/news_txt_new_stories_padding"
+        android:text="@string/news_new_stories" 
+        android:textColor="@android:color/white"
+        android:background="@android:color/holo_blue_light"
+        android:visibility="gone"/>
 </RelativeLayout>
